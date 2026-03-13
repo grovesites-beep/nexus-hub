@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, FileText, Activity, Download, BellRing, Zap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
+import { databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 
 const chartData = [
   { name: '01/03', visitas: 120, leads: 4 },
@@ -13,7 +14,27 @@ const chartData = [
 ];
 
 export default function ClientDashboard() {
+  const [stats, setStats] = useState({ leads: 0, artigos: 0 });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [leadsRes, artRes] = await Promise.all([
+          databases.listDocuments(DATABASE_ID, COLLECTIONS.LEADS),
+          databases.listDocuments(DATABASE_ID, COLLECTIONS.ARTIGOS)
+        ]);
+        setStats({
+          leads: leadsRes.total,
+          artigos: artRes.total
+        });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
     // Simulating a push/sound notification for a new lead
     const timer = setTimeout(() => {
       toast('Novo Lead Recebido!', {
@@ -55,12 +76,12 @@ export default function ClientDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="rounded-[var(--radius,0.5rem)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Oportunidades (Mês)</CardTitle>
+            <CardTitle className="text-sm font-medium">Oportunidades</CardTitle>
             <Users className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28</div>
-            <p className="text-xs text-zinc-500">+12% vs mês passado</p>
+            <div className="text-2xl font-bold">{loading ? '-' : stats.leads}</div>
+            <p className="text-xs text-zinc-500">Métricas em tempo real</p>
           </CardContent>
         </Card>
         <Card className="rounded-[var(--radius,0.5rem)]">
@@ -75,12 +96,12 @@ export default function ClientDashboard() {
         </Card>
         <Card className="rounded-[var(--radius,0.5rem)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Artigos Publicados</CardTitle>
+            <CardTitle className="text-sm font-medium">Artigos Base</CardTitle>
             <FileText className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-zinc-500">2 aguardando sua aprovação</p>
+            <div className="text-2xl font-bold">{loading ? '-' : stats.artigos}</div>
+            <p className="text-xs text-zinc-500">Métricas em tempo real</p>
           </CardContent>
         </Card>
         

@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle, DownloadCloud } from 'lucide-react';
 import { toast } from 'sonner';
+import { databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 
 export default function CopywriterDashboard() {
+  const [artigos, setArtigos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArtigos = async () => {
+      try {
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.ARTIGOS);
+        setArtigos(response.documents);
+      } catch (error) {
+        toast.error('Erro ao carregar artigos.');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArtigos();
+  }, []);
+
+  const getByStatus = (status: string) => artigos.filter(a => a.status === status);
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -18,92 +38,98 @@ export default function CopywriterDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 items-start">
-        {/* Column: A Fazer */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-zinc-900 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-zinc-400"></div> A Fazer
-            </h3>
-            <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">2</span>
+        {loading ? (
+          <div className="col-span-full py-8 text-center text-zinc-500">
+            Carregando artigos...
           </div>
-          
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm cursor-grab hover:border-zinc-300">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Empresa XYZ</span>
+        ) : (
+          <>
+            {/* Column: A Fazer */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-zinc-400"></div> A Fazer
+                </h3>
+                <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">{getByStatus('a_fazer').length}</span>
+              </div>
+              
+              {getByStatus('a_fazer').map(artigo => (
+                <div key={artigo.$id} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm cursor-grab hover:border-zinc-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{artigo.cliente}</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-zinc-900 mb-3">{artigo.titulo}</h4>
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {artigo.data || '--/--'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-3">5 Dicas de Marketing Digital para 2026</h4>
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> 20/03</span>
-            </div>
-          </div>
-          
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm cursor-grab hover:border-zinc-300">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Clínica Sorriso</span>
-            </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-3">A importância do clareamento dental</h4>
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> 22/03</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Column: Escrevendo */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-zinc-900 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-blue-500"></div> Escrevendo
-            </h3>
-            <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">1</span>
-          </div>
-          
-          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm cursor-grab">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Empresa XYZ</span>
+            {/* Column: Escrevendo */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div> Escrevendo
+                </h3>
+                <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">{getByStatus('escrevendo').length}</span>
+              </div>
+              
+              {getByStatus('escrevendo').map(artigo => (
+                <div key={artigo.$id} className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm cursor-grab">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{artigo.cliente}</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-zinc-900 mb-3">{artigo.titulo}</h4>
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span className="flex items-center gap-1 text-blue-600"><Clock className="h-3 w-3" /> Em andamento</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-3">Como otimizar seu site para SEO</h4>
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1 text-blue-600"><Clock className="h-3 w-3" /> Em andamento</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Column: Em Revisão (Cliente) */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-zinc-900 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-orange-500"></div> Em Revisão
-            </h3>
-            <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">1</span>
-          </div>
-          
-          <div className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm cursor-grab">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Clínica Sorriso</span>
+            {/* Column: Em Revisão (Cliente) */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500"></div> Em Revisão
+                </h3>
+                <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">{getByStatus('em_revisao').length}</span>
+              </div>
+              
+              {getByStatus('em_revisao').map(artigo => (
+                <div key={artigo.$id} className="rounded-xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm cursor-grab">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{artigo.cliente}</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-zinc-900 mb-3">{artigo.titulo}</h4>
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span className="flex items-center gap-1 text-orange-600"><AlertCircle className="h-3 w-3" /> Aguardando Cliente</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h4 className="text-sm font-medium text-zinc-900 mb-3">Mitos e verdades sobre implantes</h4>
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1 text-orange-600"><AlertCircle className="h-3 w-3" /> Aguardando Cliente</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Column: Publicado */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-zinc-900 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500"></div> Publicado
-            </h3>
-            <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">12</span>
-          </div>
-          
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm opacity-60">
-            <h4 className="text-sm font-medium text-zinc-900 line-through mb-3">O que é Inbound Marketing?</h4>
-            <div className="flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1 text-emerald-600"><CheckCircle className="h-3 w-3" /> Concluído</span>
+            {/* Column: Publicado */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div> Publicado
+                </h3>
+                <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">{getByStatus('publicado').length}</span>
+              </div>
+              
+              {getByStatus('publicado').map(artigo => (
+                <div key={artigo.$id} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm opacity-60">
+                  <h4 className="text-sm font-medium text-zinc-900 line-through mb-3">{artigo.titulo}</h4>
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <span className="flex items-center gap-1 text-emerald-600"><CheckCircle className="h-3 w-3" /> Concluído</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

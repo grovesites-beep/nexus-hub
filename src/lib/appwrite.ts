@@ -16,7 +16,8 @@ export const storage = new Storage(client);
 export const DATABASE_ID = 'nexus_db';
 export const COLLECTIONS = {
     CLIENTES: 'clientes',
-    LEADS: 'leads'
+    LEADS: 'leads',
+    ARTIGOS: 'artigos'
 };
 
 export default client;
