@@ -17,7 +17,9 @@ export const DATABASE_ID = 'nexus_db';
 export const COLLECTIONS = {
     CLIENTES: 'clientes',
     LEADS: 'leads',
-    ARTIGOS: 'artigos'
+    ARTIGOS: 'artigos',
+    ADMIN_CONFIG: 'admin_config',
+    ARTIGO_TEMPLATES: 'artigo_templates'
 };
 
 export default client;
