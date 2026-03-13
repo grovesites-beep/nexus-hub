@@ -11,6 +11,7 @@ import RoleLayout from './components/layout/RoleLayout';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
+import { databases, DATABASE_ID, COLLECTIONS } from './lib/appwrite';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -46,20 +47,78 @@ const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, 
 export default function App() {
   // Apply global CSS variables on initial load
   useEffect(() => {
-    const root = document.documentElement;
-    const primaryColor = localStorage.getItem('primaryColor') || '#18181b';
-    const bgColor = localStorage.getItem('bgColor') || '#fafafa';
-    const borderRadius = localStorage.getItem('borderRadius') || '0.5rem';
-    const globalFont = localStorage.getItem('globalFont') || 'Inter';
+    const applyCache = () => {
+      const root = document.documentElement;
+      const primaryColor = localStorage.getItem('primaryColor') || '#18181b';
+      const bgColor = localStorage.getItem('bgColor') || '#fafafa';
+      const borderRadius = localStorage.getItem('borderRadius') || '0.5rem';
+      const globalFont = localStorage.getItem('globalFont') || 'Inter';
 
-    root.style.setProperty('--primary-color', primaryColor);
-    root.style.setProperty('--bg-color', bgColor);
-    root.style.setProperty('--radius', borderRadius);
-    
-    let fontValue = '"Inter", ui-sans-serif, system-ui, sans-serif';
-    if (globalFont === 'Roboto') fontValue = '"Roboto", ui-sans-serif, system-ui, sans-serif';
-    if (globalFont === 'Playfair Display') fontValue = '"Playfair Display", ui-serif, Georgia, serif';
-    root.style.setProperty('--font-global', fontValue);
+      root.style.setProperty('--primary-color', primaryColor);
+      root.style.setProperty('--bg-color', bgColor);
+      root.style.setProperty('--radius', borderRadius);
+      
+      let fontValue = '"Inter", ui-sans-serif, system-ui, sans-serif';
+      if (globalFont === 'Roboto') fontValue = '"Roboto", ui-sans-serif, system-ui, sans-serif';
+      if (globalFont === 'Playfair Display') fontValue = '"Playfair Display", ui-serif, Georgia, serif';
+      root.style.setProperty('--font-global', fontValue);
+
+      const cssCustom = localStorage.getItem('cssCustom');
+      if (cssCustom) {
+        let styleEl = document.getElementById('nexus-custom-css');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'nexus-custom-css';
+          document.head.appendChild(styleEl);
+        }
+        styleEl.innerHTML = cssCustom;
+      }
+    };
+
+    const fetchConfig = async () => {
+      try {
+        const res = await databases.getDocument(DATABASE_ID, COLLECTIONS.ADMIN_CONFIG, 'global');
+        
+        const root = document.documentElement;
+        const primaryColor = res.primaryColor || '#18181b';
+        const bgColor = res.bgColor || '#fafafa';
+        const borderRadius = res.borderRadius || '0.5rem';
+        const globalFont = res.globalFont || 'Inter';
+        const loaderSpinner = res.loaderSpinner || 'spinner';
+        const cssCustom = res.cssCustom || '';
+
+        root.style.setProperty('--primary-color', primaryColor);
+        root.style.setProperty('--bg-color', bgColor);
+        root.style.setProperty('--radius', borderRadius);
+        
+        let fontValue = '"Inter", ui-sans-serif, system-ui, sans-serif';
+        if (globalFont === 'Roboto') fontValue = '"Roboto", ui-sans-serif, system-ui, sans-serif';
+        if (globalFont === 'Playfair Display') fontValue = '"Playfair Display", ui-serif, Georgia, serif';
+        root.style.setProperty('--font-global', fontValue);
+
+        if (cssCustom) {
+          let styleEl = document.getElementById('nexus-custom-css');
+          if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = 'nexus-custom-css';
+            document.head.appendChild(styleEl);
+          }
+          styleEl.innerHTML = cssCustom;
+        }
+
+        localStorage.setItem('primaryColor', primaryColor);
+        localStorage.setItem('bgColor', bgColor);
+        localStorage.setItem('borderRadius', borderRadius);
+        localStorage.setItem('globalFont', globalFont);
+        localStorage.setItem('loaderSpinner', loaderSpinner);
+        localStorage.setItem('cssCustom', cssCustom);
+      } catch (e) {
+        console.error('Erro ao buscar admin_config, usando cache local');
+      }
+    };
+
+    applyCache(); // Load fast initially
+    fetchConfig(); // Update from backend
   }, []);
 
   const adminNav = [

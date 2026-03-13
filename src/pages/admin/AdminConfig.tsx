@@ -113,6 +113,17 @@ export default function AdminConfig() {
       if (data.bgColor) localStorage.setItem('bgColor', data.bgColor);
       if (data.borderRadius) localStorage.setItem('borderRadius', data.borderRadius);
       if (data.globalFont) localStorage.setItem('globalFont', data.globalFont);
+      if (data.loaderSpinner) localStorage.setItem('loaderSpinner', data.loaderSpinner);
+      if (data.cssCustom !== undefined) {
+        localStorage.setItem('cssCustom', data.cssCustom);
+        let styleEl = document.getElementById('nexus-custom-css');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'nexus-custom-css';
+          document.head.appendChild(styleEl);
+        }
+        styleEl.innerHTML = data.cssCustom;
+      }
       
     } catch (err) {
       toast.error('Erro ao salvar as configurações.');

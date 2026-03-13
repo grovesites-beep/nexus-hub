@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { setAuth } from '../lib/auth';
 import { Shield, Briefcase, PenTool } from 'lucide-react';
+import { databases, DATABASE_ID, COLLECTIONS } from '../lib/appwrite';
 
 export default function Login() {
   const navigate = useNavigate();
-  // Mocking the layout configuration from Admin
-  const [layout] = useState<'card' | 'split' | 'full'>('card');
-  const [hidePoweredBy] = useState(false);
+  const [layout, setLayout] = useState<'card' | 'split' | 'full'>('card');
+  const [hidePoweredBy, setHidePoweredBy] = useState(false);
+  const [loginTitulo, setLoginTitulo] = useState('Acesse sua conta');
+  const [loginSubtitulo, setLoginSubtitulo] = useState('Selecione seu perfil para entrar (Modo Demo)');
+  const [nomeAgencia, setNomeAgencia] = useState('NexusHub');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await databases.getDocument(DATABASE_ID, COLLECTIONS.ADMIN_CONFIG, 'global');
+        if (res.loginLayout) setLayout(res.loginLayout);
+        if (res.hidePoweredBy !== undefined) setHidePoweredBy(res.hidePoweredBy);
+        if (res.loginTitulo) setLoginTitulo(res.loginTitulo);
+        if (res.loginSubtitulo) setLoginSubtitulo(res.loginSubtitulo);
+        if (res.nome_agencia) setNomeAgencia(res.nome_agencia);
+      } catch (err) {
+        console.error('Erro ao buscar admin_config', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const handleLogin = (role: 'admin' | 'client' | 'copywriter') => {
     setAuth(role);
@@ -19,14 +41,14 @@ export default function Login() {
   const LoginForm = () => (
     <div className="w-full max-w-md space-y-8 rounded-[var(--radius,1rem)] bg-white p-8 shadow-sm border border-zinc-200">
       <div className="text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius,0.75rem)] bg-zinc-900 text-xl font-bold text-white" style={{ backgroundColor: 'var(--primary-color, #18181b)' }}>
-          N
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[var(--radius,0.75rem)] bg-zinc-900 text-xl font-bold text-white relative overflow-hidden" style={{ backgroundColor: 'var(--primary-color, #18181b)' }}>
+          {nomeAgencia ? nomeAgencia.charAt(0).toUpperCase() : 'N'}
         </div>
         <h2 className="mt-6 text-2xl font-bold tracking-tight text-zinc-950">
-          Acesse sua conta
+          {loginTitulo}
         </h2>
         <p className="mt-2 text-sm text-zinc-500">
-          Selecione seu perfil para entrar (Modo Demo)
+          {loginSubtitulo}
         </p>
       </div>
 
@@ -85,18 +107,23 @@ export default function Login() {
 
       {!hidePoweredBy && (
         <div className="mt-8 text-center text-xs text-zinc-400">
-          Powered by NexusHub
+          Powered by {nomeAgencia}
         </div>
       )}
     </div>
   );
 
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-zinc-50" style={{ backgroundColor: 'var(--bg-color, #fafafa)' }}></div>;
+  }
+
   if (layout === 'split') {
     return (
-      <div className="flex min-h-screen bg-zinc-50" style={{ backgroundColor: 'var(--bg-color, #fafafa)' }}>
+      <div className="flex min-h-screen bg-zinc-50 tracking-tight" style={{ backgroundColor: 'var(--bg-color, #fafafa)' }}>
         <div className="hidden lg:block lg:w-1/2 bg-zinc-900 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center">
-          <div className="h-full w-full bg-black/50 flex items-center justify-center p-12">
-            <div className="text-white max-w-lg">
+          <div className="h-full w-full bg-black/50 flex flex-col justify-between p-12">
+            <div className="text-white text-xl font-bold">{nomeAgencia}</div>
+            <div className="text-white max-w-lg mb-12">
               <h1 className="text-4xl font-bold mb-4">Bem-vindo à sua plataforma de crescimento.</h1>
               <p className="text-lg text-zinc-300">Gerencie seus leads, acompanhe resultados e escale suas vendas em um só lugar.</p>
             </div>

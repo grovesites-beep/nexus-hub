@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, Bell, AlertTriangle, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAuth, setAuth, setImpersonation } from '../../lib/auth';
+import { databases, DATABASE_ID, COLLECTIONS } from '../../lib/appwrite';
 
 interface NavItem {
   name: string;
@@ -23,8 +24,27 @@ export default function RoleLayout({ navigation, roleName, basePath }: RoleLayou
   const navigate = useNavigate();
   const { role, impersonating } = getAuth();
 
-  // Simulating a broadcast message from Admin
-  const broadcastMessage = "Manutenção programada para o servidor principal nesta sexta-feira às 23h.";
+  const [nomeAgencia, setNomeAgencia] = useState('NexusHub');
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [broadcastMessage, setBroadcastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await databases.getDocument(DATABASE_ID, COLLECTIONS.ADMIN_CONFIG, 'global');
+        if (res.nome_agencia) setNomeAgencia(res.nome_agencia);
+        if (res.favicon) setFaviconUrl(res.favicon);
+        if (res.broadcastActive && res.broadcastMsg) {
+          setBroadcastMessage(res.broadcastMsg);
+        } else {
+          setBroadcastMessage(null);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar topo e broadcast:', err);
+      }
+    };
+    fetchConfig();
+  }, [location.pathname]); // refetch softly occasionally
 
   const handleLogout = () => {
     setAuth(null);
@@ -56,11 +76,15 @@ export default function RoleLayout({ navigation, roleName, basePath }: RoleLayou
       <aside className={`hidden flex-col border-r border-zinc-200 bg-white sm:flex transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
         <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4">
           <div className={`flex items-center gap-2 font-semibold text-zinc-950 ${isSidebarCollapsed ? 'justify-center w-full' : ''}`}>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius,0.5rem)] bg-zinc-900 text-white" style={{ backgroundColor: 'var(--primary-color, #18181b)' }}>
-              N
-            </div>
+            {faviconUrl ? (
+              <img src={faviconUrl} alt={nomeAgencia} className="h-8 w-8 rounded-[var(--radius,0.5rem)] object-cover" />
+            ) : (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius,0.5rem)] bg-zinc-900 text-white" style={{ backgroundColor: 'var(--primary-color, #18181b)' }}>
+                {nomeAgencia ? nomeAgencia.charAt(0).toUpperCase() : 'N'}
+              </div>
+            )}
             {!isSidebarCollapsed && (
-              <span className="truncate">NexusHub <span className="text-xs font-normal text-zinc-500 ml-1 border border-zinc-200 rounded px-1">{roleName}</span></span>
+              <span className="truncate">{nomeAgencia} <span className="text-xs font-normal text-zinc-500 ml-1 border border-zinc-200 rounded px-1">{roleName}</span></span>
             )}
           </div>
         </div>
@@ -103,7 +127,7 @@ export default function RoleLayout({ navigation, roleName, basePath }: RoleLayou
           <div className="fixed inset-0 bg-zinc-950/50" onClick={() => setIsMobileMenuOpen(false)} />
           <aside className="relative flex w-64 flex-col bg-white">
             <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4">
-              <span className="font-semibold text-zinc-950">NexusHub</span>
+              <span className="font-semibold text-zinc-950">{nomeAgencia}</span>
               <button onClick={() => setIsMobileMenuOpen(false)}><X className="h-5 w-5 text-zinc-500" /></button>
             </div>
             <nav className="flex flex-1 flex-col gap-1 p-4">
@@ -127,9 +151,9 @@ export default function RoleLayout({ navigation, roleName, basePath }: RoleLayou
       <div className="flex flex-1 flex-col min-w-0">
         {/* Broadcast Banner */}
         {broadcastMessage && (
-          <div className="bg-indigo-600 px-4 py-2 text-center text-xs font-medium text-white sm:px-6 lg:px-8 flex items-center justify-center gap-2" style={{ backgroundColor: 'var(--primary-color, #4f46e5)' }}>
-            <AlertTriangle className="h-4 w-4" />
-            {broadcastMessage}
+          <div className="bg-indigo-600 px-4 py-2 text-center text-xs font-medium text-white sm:px-6 lg:px-8 flex items-center justify-center gap-2 relative border-b" style={{ backgroundColor: 'var(--primary-color, #4f46e5)', borderColor: 'rgba(0,0,0,0.1)' }}>
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span className="truncate">{broadcastMessage}</span>
           </div>
         )}
 
